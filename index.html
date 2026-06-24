@@ -257,7 +257,8 @@
         @keyframes globePulseGlow{0%,100%{box-shadow:0 0 24px rgba(232,165,75,0.5),inset -8px -8px 20px rgba(0,0,0,0.55)}50%{box-shadow:0 0 40px rgba(232,165,75,0.85),inset -8px -8px 20px rgba(0,0,0,0.55)}}
         @keyframes globeScrollLines{from{transform:translateX(-17px)}to{transform:translateX(0)}}
         @keyframes globeRingPulse{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
-        .globe-map-wrap{position:relative;border-radius:50%;overflow:hidden;border:3px solid rgba(232,165,75,0.6);box-shadow:0 0 50px rgba(232,165,75,0.35),0 12px 40px rgba(0,0,0,0.55);animation:globeExpand 0.85s cubic-bezier(0.34,1.56,0.64,1)}
+        .globe-map-wrap{position:relative;border-radius:50%;overflow:hidden;border:3px solid rgba(232,165,75,0.6);box-shadow:0 0 60px rgba(232,165,75,0.4),0 0 120px rgba(80,140,255,0.15),0 12px 40px rgba(0,0,0,0.7);animation:globeExpand 0.85s cubic-bezier(0.34,1.56,0.64,1);background:#000510}
+        .globe-atmosphere{position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle at center,transparent 46%,rgba(100,180,255,0.15) 56%,rgba(50,120,220,0.38) 69%,rgba(8,20,60,0.82) 83%,rgba(0,4,18,0.97) 96%);pointer-events:none;z-index:600}
         .globe-map-inner{width:100%;height:100%}
         .globe-shine{position:absolute;top:7%;left:7%;width:32%;height:22%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.28) 0%,transparent 70%);pointer-events:none;z-index:500}
         .globe-ring-pulse{position:absolute;inset:-4px;border-radius:50%;border:3px solid var(--sec-orange);animation:globeRingPulse 2.2s ease-in-out infinite;pointer-events:none;z-index:500}
@@ -276,7 +277,17 @@
                 <form onsubmit="return handleLogin(event)">
                     <div class="form-group"><label>رقم الجوال</label><input type="tel" id="loginPhone" placeholder="05xxxxxxxx" maxlength="10" oninput="validateLoginPhone()" required><div class="input-hint" id="loginPhoneHint">10 ارقام تبدا بـ 05</div></div>
                     <button type="submit" class="btn btn-primary" id="loginBtn" disabled>دخول</button>
+                    <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.9rem;">
+                        <input type="checkbox" id="rememberMeCheck" checked style="width:1.1rem;height:1.1rem;accent-color:var(--sec-orange);cursor:pointer;flex-shrink:0;">
+                        <label for="rememberMeCheck" style="color:var(--text-secondary);font-size:0.85rem;cursor:pointer;margin:0;">تذكرني على هذا الجهاز</label>
+                    </div>
                 </form>
+                <div id="biometricSection" style="display:none;margin-top:0.75rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="color:var(--text-secondary);font-size:0.8rem;white-space:nowrap;">أو</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
+                    <button type="button" onclick="loginWithBiometric()" style="width:100%;padding:0.8rem;border:2px solid var(--sec-orange);border-radius:0.5rem;background:linear-gradient(135deg,rgba(232,165,75,0.1),rgba(232,165,75,0.05));color:var(--sec-orange);font-family:'Tajawal',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:0.3s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(232,165,75,0.2),rgba(232,165,75,0.1))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(232,165,75,0.1),rgba(232,165,75,0.05))'">
+                        <span style="font-size:1.3rem;">👆</span> دخول بالبصمة
+                    </button>
+                </div>
             </div>
             <div class="tab-content" id="registerTab">
                 <form onsubmit="return handleRegister(event)">
@@ -324,6 +335,7 @@
                     <div id="globeMapInner" class="globe-map-inner"></div>
                     <div class="globe-shine"></div>
                     <div class="globe-ring-pulse"></div>
+                    <div class="globe-atmosphere"></div>
                 </div>
                 <div id="globeLabel" class="globe-label">🔍 جاري البحث...</div>
             </section>
@@ -729,34 +741,36 @@
                 hideLoading(); 
                 if (r.notFound) { showToast('غير مسجل', 'warning'); switchTab('register'); document.getElementById('regPhone').value = p; validateRegPhone(); return false; } 
                 if (r.error) { showToast(r.error, 'error'); return false; } 
-                currentUser = r.user; 
-                localStorage.setItem('currentUser', JSON.stringify(currentUser)); 
-                updateUserUI(); 
-                showPage('dashboardPage'); 
-                showToast('مرحبا ' + currentUser.name); 
-                loadStationsCache(); 
-                startOnlineTracking(); 
+                currentUser = r.user;
+                saveSession(currentUser);
+                updateUserUI();
+                showPage('dashboardPage');
+                showToast('مرحبا ' + currentUser.name);
+                loadStationsCache();
+                startOnlineTracking();
+                offerBiometricSetup();
             } catch (err) { hideLoading(); showToast('فشل الاتصال', 'error'); }
-            return false; 
+            return false;
         }
-        
-        async function handleRegister(e) { 
-            e.preventDefault(); 
-            var name = document.getElementById('regName').value.trim(); 
-            if (!name || !isValidPhone(document.getElementById('regPhone').value)) { showToast('تحقق من البيانات', 'error'); return false; } 
-            var p = normalizePhone(document.getElementById('regPhone').value); 
-            showLoading(); 
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            var name = document.getElementById('regName').value.trim();
+            if (!name || !isValidPhone(document.getElementById('regPhone').value)) { showToast('تحقق من البيانات', 'error'); return false; }
+            var p = normalizePhone(document.getElementById('regPhone').value);
+            showLoading();
             try {
-                var r = await apiPost({ action: 'registerUser', name: name, phone: p, email: document.getElementById('regEmail').value.trim(), userType: document.getElementById('regType').value }); 
-                hideLoading(); 
-                if (r.error && !r.alreadyExists) { showToast(r.error, 'error'); return false; } 
-                currentUser = r.user; 
-                localStorage.setItem('currentUser', JSON.stringify(currentUser)); 
-                updateUserUI(); 
-                showPage('dashboardPage'); 
-                showToast(r.alreadyExists ? 'مرحبا بعودتك' : 'تم التسجيل'); 
-                loadStationsCache(); 
-                startOnlineTracking(); 
+                var r = await apiPost({ action: 'registerUser', name: name, phone: p, email: document.getElementById('regEmail').value.trim(), userType: document.getElementById('regType').value });
+                hideLoading();
+                if (r.error && !r.alreadyExists) { showToast(r.error, 'error'); return false; }
+                currentUser = r.user;
+                saveSession(currentUser);
+                updateUserUI();
+                showPage('dashboardPage');
+                showToast(r.alreadyExists ? 'مرحبا بعودتك' : 'تم التسجيل');
+                loadStationsCache();
+                startOnlineTracking();
+                offerBiometricSetup(); 
             } catch (err) { hideLoading(); showToast('فشل الاتصال', 'error'); }
             return false; 
         }
@@ -802,8 +816,92 @@
                 document.getElementById('adminToggleBtn').style.display = 'flex';
             }
         }
-        function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; localStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; showToast('تم الخروج'); }
-        function checkSession() { try { var s = localStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); if (!currentUser || !currentUser.name) throw new Error('bad session'); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); } else { showPage('loginPage'); } } catch(e) { localStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); showPage('loginPage'); } }
+        function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; checkBiometricAvailable(); showToast('تم الخروج'); }
+        function checkSession() { try { var s = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); if (!currentUser || !currentUser.name) throw new Error('bad session'); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); } else { showPage('loginPage'); checkBiometricAvailable(); } } catch(e) { localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); showPage('loginPage'); checkBiometricAvailable(); } }
+
+        // === تذكرني + البصمة ===
+        function saveSession(user) {
+            var check = document.getElementById('rememberMeCheck');
+            if (!check || check.checked) {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                sessionStorage.removeItem('currentUser');
+            } else {
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.removeItem('currentUser');
+            }
+        }
+
+        function checkBiometricAvailable() {
+            if (window.PublicKeyCredential && localStorage.getItem('biometric_credential_id')) {
+                var sec = document.getElementById('biometricSection');
+                if (sec) sec.style.display = 'block';
+            }
+        }
+
+        async function setupBiometric() {
+            if (!window.PublicKeyCredential) { showToast('الجهاز لا يدعم البصمة', 'warning'); return; }
+            var isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            if (!isSecure) { showToast('البصمة تحتاج HTTPS - تواصل مع المدير', 'warning'); return; }
+            try {
+                var challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
+                var cred = await navigator.credentials.create({ publicKey: {
+                    challenge: challenge,
+                    rp: { name: 'SEC Stations', id: location.hostname },
+                    user: { id: new TextEncoder().encode(currentUser.phone), name: currentUser.phone, displayName: currentUser.name },
+                    pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+                    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', requireResidentKey: false },
+                    timeout: 60000
+                }});
+                var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
+                localStorage.setItem('biometric_credential_id', credId);
+                localStorage.setItem('biometric_user', JSON.stringify(currentUser));
+                showToast('✅ تم تفعيل تسجيل الدخول بالبصمة');
+                document.getElementById('biometricSection').style.display = 'none'; // إخفاء زر العرض
+            } catch(e) { if (e.name !== 'NotAllowedError') showToast('فشل تفعيل البصمة', 'error'); }
+        }
+
+        async function loginWithBiometric() {
+            var credId = localStorage.getItem('biometric_credential_id');
+            if (!credId) { showToast('لم يتم تفعيل البصمة بعد', 'warning'); return; }
+            try {
+                var challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
+                var credBytes = Uint8Array.from(atob(credId), function(c) { return c.charCodeAt(0); });
+                await navigator.credentials.get({ publicKey: {
+                    challenge: challenge,
+                    allowCredentials: [{ id: credBytes, type: 'public-key', transports: ['internal'] }],
+                    userVerification: 'required',
+                    timeout: 60000
+                }});
+                var savedUser = JSON.parse(localStorage.getItem('biometric_user'));
+                if (!savedUser) { showToast('لم يتم العثور على بيانات المستخدم', 'error'); return; }
+                currentUser = savedUser;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUserUI();
+                showPage('dashboardPage');
+                loadStationsCache();
+                startOnlineTracking();
+                checkAdminStatus();
+                showToast('مرحبا ' + currentUser.name + ' 👋');
+            } catch(e) { if (e.name !== 'NotAllowedError') showToast('فشل التحقق بالبصمة', 'error'); }
+        }
+
+        function offerBiometricSetup() {
+            if (!window.PublicKeyCredential) return;
+            if (localStorage.getItem('biometric_credential_id')) return;
+            var isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+            if (!isSecure) return;
+            setTimeout(function() {
+                var t = document.createElement('div');
+                t.className = 'toast toast-warning';
+                t.style.cssText = 'cursor:pointer;min-width:240px;display:flex;align-items:center;gap:0.5rem;';
+                t.innerHTML = '👆 <span>فعّل تسجيل الدخول بالبصمة؟ <u>اضغط هنا</u></span>';
+                t.onclick = function() { t.remove(); setupBiometric(); };
+                document.getElementById('toastContainer').appendChild(t);
+                setTimeout(function() { t.style.opacity='0'; setTimeout(function(){t.remove();},300); }, 8000);
+            }, 1500);
+        }
 
         function showGlobeMini() {
             var gs = document.getElementById('globeSection');
@@ -831,24 +929,32 @@
             document.getElementById('globeLabel').innerHTML = '📍 <strong style="color:var(--sec-orange)">' + stationNumber + '</strong>' + regionText + ' &mdash; جدة<br><small style="color:var(--text-secondary);font-size:0.75rem;">اضغط على الكرة للتنقل 🧭</small>';
             if (globeLeafletMap) { globeLeafletMap.remove(); globeLeafletMap = null; }
             setTimeout(function() {
-                globeLeafletMap = L.map('globeMapInner', { zoomControl: false, attributionControl: false });
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(globeLeafletMap);
-                globeLeafletMap.setView([24.0, 45.0], 4);
-                var pulseHtml = '<div style="position:relative;width:20px;height:20px;">'
-                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;background:#e8a54b;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(232,165,75,0.9);transform:translate(-50%,-50%);z-index:2;"></div>'
-                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out infinite;"></div>'
-                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out 0.55s infinite;"></div>'
+                globeLeafletMap = L.map('globeMapInner', { zoomControl: false, attributionControl: false, fadeAnimation: true, zoomAnimation: true });
+                // صور الأقمار الصناعية (ESRI World Imagery) - مثل Google Earth
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(globeLeafletMap);
+                // البداية من "الفضاء" - منظور واسع لقارة آسيا
+                globeLeafletMap.setView([28.0, 55.0], 2);
+                var pulseHtml = '<div style="position:relative;width:24px;height:24px;">'
+                    + '<div style="position:absolute;top:50%;left:50%;width:16px;height:16px;background:#e8a54b;border-radius:50%;border:3px solid #fff;box-shadow:0 0 16px rgba(232,165,75,1),0 0 30px rgba(232,165,75,0.5);transform:translate(-50%,-50%);z-index:2;"></div>'
+                    + '<div style="position:absolute;top:50%;left:50%;width:16px;height:16px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out infinite;"></div>'
+                    + '<div style="position:absolute;top:50%;left:50%;width:16px;height:16px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out 0.6s infinite;"></div>'
+                    + '<div style="position:absolute;top:50%;left:50%;width:16px;height:16px;border:2px solid rgba(232,165,75,0.5);border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out 1.2s infinite;"></div>'
                     + '</div>';
-                var pulseIcon = L.divIcon({ className: '', html: pulseHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+                var pulseIcon = L.divIcon({ className: '', html: pulseHtml, iconSize: [24, 24], iconAnchor: [12, 12] });
                 var marker = L.marker([lat, lng], { icon: pulseIcon }).addTo(globeLeafletMap);
                 var popupContent = '<b style="color:#e8a54b;font-size:1rem;">' + stationNumber + '</b>'
                     + (region ? '<br>🏘️ ' + region : '')
                     + '<br><a href="' + mapsUrl + '" target="_blank" style="color:#5b8fb9;font-size:0.8rem;text-decoration:none;">🧭 التنقل في قوقل ماب</a>';
                 marker.bindPopup(popupContent);
+                // المرحلة 1: من الفضاء إلى المملكة العربية السعودية
                 setTimeout(function() {
-                    globeLeafletMap.flyTo([lat, lng], 14, { duration: 1.9, easeLinearity: 0.25 });
-                    setTimeout(function() { marker.openPopup(); }, 2400);
-                }, 250);
+                    globeLeafletMap.flyTo([24.0, 44.5], 5, { duration: 1.6, easeLinearity: 0.35 });
+                    // المرحلة 2: من المملكة إلى جدة
+                    setTimeout(function() {
+                        globeLeafletMap.flyTo([lat, lng], 14, { duration: 1.8, easeLinearity: 0.25 });
+                        setTimeout(function() { marker.openPopup(); }, 2200);
+                    }, 2000);
+                }, 500);
             }, 80);
         }
 
