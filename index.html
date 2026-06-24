@@ -810,6 +810,7 @@
         }
         function backToEmployee() {
             showPage('dashboardPage');
+            offerBiometricSetup();
         }
         function adminLogout() {
             isAdmin = false;
@@ -851,6 +852,7 @@
         }
 
         function offerBiometricSetup() {
+            if (!currentUser) return;
             if (localStorage.getItem('biometric_credential_id')) return;
             if (localStorage.getItem('biometric_banner_dismissed')) return;
             setTimeout(function() {
