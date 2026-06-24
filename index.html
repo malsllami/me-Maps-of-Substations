@@ -816,15 +816,19 @@
             gs.style.display = 'flex';
         }
 
-        function showGlobeExpanded(lat, lng, stationNumber) {
+        function showGlobeExpanded(lat, lng, stationNumber, region) {
             var spinner = document.getElementById('globeSpinner');
             var mapWrap = document.getElementById('globeMapWrap');
+            var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
             spinner.style.display = 'none';
             var size = Math.min(window.innerWidth - 64, 320);
             mapWrap.style.width = size + 'px';
             mapWrap.style.height = size + 'px';
             mapWrap.style.display = 'block';
-            document.getElementById('globeLabel').innerHTML = '📍 <strong style="color:var(--sec-orange)">' + stationNumber + '</strong> &mdash; جدة، المملكة العربية السعودية';
+            mapWrap.style.cursor = 'pointer';
+            mapWrap.onclick = function() { window.open(mapsUrl, '_blank'); };
+            var regionText = region ? ' &bull; <span style="color:var(--text-secondary)">' + region + '</span>' : '';
+            document.getElementById('globeLabel').innerHTML = '📍 <strong style="color:var(--sec-orange)">' + stationNumber + '</strong>' + regionText + ' &mdash; جدة<br><small style="color:var(--text-secondary);font-size:0.75rem;">اضغط على الكرة للتنقل 🧭</small>';
             if (globeLeafletMap) { globeLeafletMap.remove(); globeLeafletMap = null; }
             setTimeout(function() {
                 globeLeafletMap = L.map('globeMapInner', { zoomControl: false, attributionControl: false });
@@ -837,7 +841,10 @@
                     + '</div>';
                 var pulseIcon = L.divIcon({ className: '', html: pulseHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
                 var marker = L.marker([lat, lng], { icon: pulseIcon }).addTo(globeLeafletMap);
-                marker.bindPopup('<b style="color:#e8a54b;font-size:1rem;">' + stationNumber + '</b><br><small>' + lat.toFixed(5) + ', ' + lng.toFixed(5) + '</small>');
+                var popupContent = '<b style="color:#e8a54b;font-size:1rem;">' + stationNumber + '</b>'
+                    + (region ? '<br>🏘️ ' + region : '')
+                    + '<br><a href="' + mapsUrl + '" target="_blank" style="color:#5b8fb9;font-size:0.8rem;text-decoration:none;">🧭 التنقل في قوقل ماب</a>';
+                marker.bindPopup(popupContent);
                 setTimeout(function() {
                     globeLeafletMap.flyTo([lat, lng], 14, { duration: 1.9, easeLinearity: 0.25 });
                     setTimeout(function() { marker.openPopup(); }, 2400);
@@ -877,7 +884,7 @@
                 currentSearchedStation = r.station;
                 var s = r.station;
                 if (s.lat && s.lng) {
-                    showGlobeExpanded(parseFloat(s.lat), parseFloat(s.lng), s.number);
+                    showGlobeExpanded(parseFloat(s.lat), parseFloat(s.lng), s.number, s.region || '');
                 } else {
                     hideGlobe();
                 }
