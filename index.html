@@ -316,6 +316,13 @@
             </div>
         </header>
         <div class="main-content">
+            <!-- بانر تفعيل البصمة - يظهر مرة واحدة بعد تسجيل الدخول -->
+            <div id="biometricBanner" style="display:none;background:linear-gradient(135deg,rgba(232,165,75,0.12),rgba(232,165,75,0.06));border:1px solid rgba(232,165,75,0.35);border-radius:0.75rem;padding:0.85rem 1rem;margin-bottom:1rem;display:none;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <span style="font-size:1.5rem;">👆</span>
+                <div style="flex:1;min-width:150px;"><div style="font-weight:600;font-size:0.9rem;">تفعيل تسجيل الدخول بالبصمة</div><div style="font-size:0.75rem;color:var(--text-secondary);">ادخل بسرعة في المرات القادمة بدون كتابة رقمك</div></div>
+                <button onclick="setupBiometric()" style="padding:0.5rem 1rem;background:var(--sec-orange);border:none;border-radius:0.5rem;color:#fff;font-family:'Tajawal',sans-serif;font-weight:600;cursor:pointer;font-size:0.85rem;white-space:nowrap;">تفعيل الآن</button>
+                <button onclick="dismissBiometricBanner()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.2rem;padding:0.2rem 0.4rem;line-height:1;">×</button>
+            </div>
             <section class="search-section">
                 <h2><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>البحث عن محطة</h2>
                 <div class="search-box"><input type="text" id="searchInput" placeholder="رقم المحطة او اسم محطة التحويل" onkeypress="if(event.key==='Enter')searchStation()"></div>
@@ -832,33 +839,56 @@
         }
 
         function checkBiometricAvailable() {
-            if (window.PublicKeyCredential && localStorage.getItem('biometric_credential_id')) {
-                var sec = document.getElementById('biometricSection');
-                if (sec) sec.style.display = 'block';
-            }
+            var hasCred = !!localStorage.getItem('biometric_credential_id');
+            var sec = document.getElementById('biometricSection');
+            if (sec) sec.style.display = (window.PublicKeyCredential && hasCred) ? 'block' : 'none';
+        }
+
+        function dismissBiometricBanner() {
+            var b = document.getElementById('biometricBanner');
+            if (b) b.style.display = 'none';
+            localStorage.setItem('biometric_banner_dismissed', '1');
+        }
+
+        function offerBiometricSetup() {
+            if (!window.PublicKeyCredential) return;
+            if (localStorage.getItem('biometric_credential_id')) return;
+            if (localStorage.getItem('biometric_banner_dismissed')) return;
+            setTimeout(function() {
+                var b = document.getElementById('biometricBanner');
+                if (b) b.style.display = 'flex';
+            }, 800);
         }
 
         async function setupBiometric() {
             if (!window.PublicKeyCredential) { showToast('الجهاز لا يدعم البصمة', 'warning'); return; }
-            var isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            if (!isSecure) { showToast('البصمة تحتاج HTTPS - تواصل مع المدير', 'warning'); return; }
             try {
+                var rpId = (location.hostname && location.hostname !== '') ? location.hostname : undefined;
                 var challenge = new Uint8Array(32);
                 crypto.getRandomValues(challenge);
-                var cred = await navigator.credentials.create({ publicKey: {
+                var createOptions = {
                     challenge: challenge,
-                    rp: { name: 'SEC Stations', id: location.hostname },
+                    rp: { name: 'SEC Stations' },
                     user: { id: new TextEncoder().encode(currentUser.phone), name: currentUser.phone, displayName: currentUser.name },
                     pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
                     authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', requireResidentKey: false },
                     timeout: 60000
-                }});
+                };
+                if (rpId) createOptions.rp.id = rpId;
+                var cred = await navigator.credentials.create({ publicKey: createOptions });
                 var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
                 localStorage.setItem('biometric_credential_id', credId);
                 localStorage.setItem('biometric_user', JSON.stringify(currentUser));
+                localStorage.setItem('biometric_banner_dismissed', '1');
+                dismissBiometricBanner();
                 showToast('✅ تم تفعيل تسجيل الدخول بالبصمة');
-                document.getElementById('biometricSection').style.display = 'none'; // إخفاء زر العرض
-            } catch(e) { if (e.name !== 'NotAllowedError') showToast('فشل تفعيل البصمة', 'error'); }
+            } catch(e) {
+                if (e.name === 'NotSupportedError' || e.name === 'SecurityError') {
+                    showToast('البصمة تحتاج HTTPS — الميزة غير متاحة على هذا الرابط', 'warning');
+                } else if (e.name !== 'NotAllowedError') {
+                    showToast('فشل تفعيل البصمة', 'error');
+                }
+            }
         }
 
         async function loginWithBiometric() {
@@ -875,7 +905,7 @@
                     timeout: 60000
                 }});
                 var savedUser = JSON.parse(localStorage.getItem('biometric_user'));
-                if (!savedUser) { showToast('لم يتم العثور على بيانات المستخدم', 'error'); return; }
+                if (!savedUser) { showToast('بيانات غير موجودة، سجّل دخول بالجوال مرة واحدة', 'error'); return; }
                 currentUser = savedUser;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 updateUserUI();
@@ -884,23 +914,11 @@
                 startOnlineTracking();
                 checkAdminStatus();
                 showToast('مرحبا ' + currentUser.name + ' 👋');
-            } catch(e) { if (e.name !== 'NotAllowedError') showToast('فشل التحقق بالبصمة', 'error'); }
-        }
-
-        function offerBiometricSetup() {
-            if (!window.PublicKeyCredential) return;
-            if (localStorage.getItem('biometric_credential_id')) return;
-            var isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
-            if (!isSecure) return;
-            setTimeout(function() {
-                var t = document.createElement('div');
-                t.className = 'toast toast-warning';
-                t.style.cssText = 'cursor:pointer;min-width:240px;display:flex;align-items:center;gap:0.5rem;';
-                t.innerHTML = '👆 <span>فعّل تسجيل الدخول بالبصمة؟ <u>اضغط هنا</u></span>';
-                t.onclick = function() { t.remove(); setupBiometric(); };
-                document.getElementById('toastContainer').appendChild(t);
-                setTimeout(function() { t.style.opacity='0'; setTimeout(function(){t.remove();},300); }, 8000);
-            }, 1500);
+            } catch(e) {
+                if (e.name === 'NotAllowedError') return;
+                if (e.name === 'SecurityError') { showToast('البصمة تحتاج HTTPS', 'warning'); return; }
+                showToast('فشل التحقق بالبصمة', 'error');
+            }
         }
 
         function showGlobeMini() {
