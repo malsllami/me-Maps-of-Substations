@@ -245,6 +245,26 @@
         .password-wrapper{position:relative}
         .password-wrapper input{padding-left:2.5rem}
         .spinner{width:1rem;height:1rem;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
+        /* === الكرة الأرضية === */
+        .globe-section{background:var(--bg-card);border-radius:1rem;padding:1.5rem 1rem;margin-bottom:1rem;display:flex;flex-direction:column;align-items:center;gap:1rem;animation:globeFadeIn 0.4s ease}
+        @keyframes globeFadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        .globe-spinner-wrap{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
+        .globe-sphere{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 32% 32%,#7ab5d8 0%,#2d6a9f 30%,#1e3a5f 60%,#0d1825 100%);box-shadow:0 0 24px rgba(232,165,75,0.5),inset -8px -8px 20px rgba(0,0,0,0.55),inset 6px 6px 16px rgba(91,143,185,0.25);position:relative;overflow:hidden;animation:globePulseGlow 2s ease-in-out infinite}
+        .globe-sphere::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 16px,rgba(255,255,255,0.09) 16px,rgba(255,255,255,0.09) 17px);animation:globeScrollLines 1.6s linear infinite;border-radius:50%}
+        .globe-sphere::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent,transparent 16px,rgba(255,255,255,0.06) 16px,rgba(255,255,255,0.06) 17px);border-radius:50%}
+        .globe-continent{position:absolute;top:28%;left:18%;width:64%;height:44%;background:rgba(46,139,87,0.45);border-radius:40% 60% 55% 45%/50% 40% 60% 50%;filter:blur(2px);animation:globeScrollLines 1.6s linear infinite}
+        .globe-ring-outer{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(232,165,75,0.6);animation:globeRingPulse 2s ease-in-out infinite}
+        @keyframes globePulseGlow{0%,100%{box-shadow:0 0 24px rgba(232,165,75,0.5),inset -8px -8px 20px rgba(0,0,0,0.55)}50%{box-shadow:0 0 40px rgba(232,165,75,0.85),inset -8px -8px 20px rgba(0,0,0,0.55)}}
+        @keyframes globeScrollLines{from{transform:translateX(-17px)}to{transform:translateX(0)}}
+        @keyframes globeRingPulse{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+        .globe-map-wrap{position:relative;border-radius:50%;overflow:hidden;border:3px solid rgba(232,165,75,0.6);box-shadow:0 0 50px rgba(232,165,75,0.35),0 12px 40px rgba(0,0,0,0.55);animation:globeExpand 0.85s cubic-bezier(0.34,1.56,0.64,1)}
+        .globe-map-inner{width:100%;height:100%}
+        .globe-shine{position:absolute;top:7%;left:7%;width:32%;height:22%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.28) 0%,transparent 70%);pointer-events:none;z-index:500}
+        .globe-ring-pulse{position:absolute;inset:-4px;border-radius:50%;border:3px solid var(--sec-orange);animation:globeRingPulse 2.2s ease-in-out infinite;pointer-events:none;z-index:500}
+        @keyframes globeExpand{from{transform:scale(0.15);opacity:0}to{transform:scale(1);opacity:1}}
+        .globe-label{font-size:0.88rem;color:var(--text-secondary);text-align:center;min-height:1.4rem}
+        /* نبضات نقطة الموقع داخل الكرة */
+        @keyframes locationPulse{0%{transform:translate(-50%,-50%) scale(1);opacity:0.9}100%{transform:translate(-50%,-50%) scale(3.5);opacity:0}}
     </style>
 </head>
 <body>
@@ -294,6 +314,18 @@
                     <button class="action-btn btn-add-sub" onclick="openAddModal('substation')"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>تحويل</span></button>
                     <button class="action-btn btn-fault" onclick="openFaultModal()"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg><span>اعطال</span></button>
                 </div>
+            </section>
+            <section id="globeSection" class="globe-section" style="display:none;">
+                <div id="globeSpinner" class="globe-spinner-wrap">
+                    <div class="globe-sphere"><div class="globe-continent"></div></div>
+                    <div class="globe-ring-outer"></div>
+                </div>
+                <div id="globeMapWrap" class="globe-map-wrap" style="display:none;">
+                    <div id="globeMapInner" class="globe-map-inner"></div>
+                    <div class="globe-shine"></div>
+                    <div class="globe-ring-pulse"></div>
+                </div>
+                <div id="globeLabel" class="globe-label">🔍 جاري البحث...</div>
             </section>
             <section class="results-section" id="resultsSection" style="display:none;"><div class="results-header"><h3>النتائج</h3><span class="results-count" id="resultsCount">0</span></div><div id="resultsContent"></div></section>
             <section class="map-section" id="mapSection" style="display:none;"><h3 id="mapTitle">📍 المحطات القريبة</h3><div id="nearbyMap" class="map-container"></div><div id="nearbyList" style="margin-top:1rem;"></div></section>
@@ -437,6 +469,7 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxGopljlI-_c9OYYGIL6AVvTjj4F7HxA_r-_7dQ0DiHw0H9y18r8Jl6lMWgyIPmX8Q/exec';
         let currentUser = null, nearbyMap = null, faultMap = null, faultStations = [], editingStationType = null, deferredPrompt = null;
+        let globeLeafletMap = null;
         let visitsChartInstance = null, activityChartInstance = null;
         let isAdmin = false;
         const CACHE_KEY = 'sec_stations_v8', CACHE_VERSION_KEY = 'sec_version_v8';
@@ -772,26 +805,86 @@
         function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; localStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; showToast('تم الخروج'); }
         function checkSession() { var s = localStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); } }
 
-        async function searchStation() { 
-            var v = convertArabicToEnglishNumbers(document.getElementById('searchInput').value.trim()); 
-            document.getElementById('searchInput').value = v; // تحديث الحقل بالأرقام الإنجليزية
-            if (!v) { showToast('ادخل الرقم', 'warning'); return; } 
-            if (!isStationsLoaded) { showLoading(); await loadStationsCache(); hideLoading(); } 
-            var r = searchStationLocal(v), rc = document.getElementById('resultsContent'), rn = document.getElementById('resultsCount'); 
+        function showGlobeMini() {
+            var gs = document.getElementById('globeSection');
+            var spinner = document.getElementById('globeSpinner');
+            var mapWrap = document.getElementById('globeMapWrap');
+            if (globeLeafletMap) { globeLeafletMap.remove(); globeLeafletMap = null; }
+            mapWrap.style.display = 'none';
+            spinner.style.display = 'flex';
+            document.getElementById('globeLabel').innerHTML = '🔍 جاري البحث...';
+            gs.style.display = 'flex';
+        }
+
+        function showGlobeExpanded(lat, lng, stationNumber) {
+            var spinner = document.getElementById('globeSpinner');
+            var mapWrap = document.getElementById('globeMapWrap');
+            spinner.style.display = 'none';
+            var size = Math.min(window.innerWidth - 64, 320);
+            mapWrap.style.width = size + 'px';
+            mapWrap.style.height = size + 'px';
+            mapWrap.style.display = 'block';
+            document.getElementById('globeLabel').innerHTML = '📍 <strong style="color:var(--sec-orange)">' + stationNumber + '</strong> &mdash; جدة، المملكة العربية السعودية';
+            if (globeLeafletMap) { globeLeafletMap.remove(); globeLeafletMap = null; }
+            setTimeout(function() {
+                globeLeafletMap = L.map('globeMapInner', { zoomControl: false, attributionControl: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(globeLeafletMap);
+                globeLeafletMap.setView([24.0, 45.0], 4);
+                var pulseHtml = '<div style="position:relative;width:20px;height:20px;">'
+                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;background:#e8a54b;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(232,165,75,0.9);transform:translate(-50%,-50%);z-index:2;"></div>'
+                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out infinite;"></div>'
+                    + '<div style="position:absolute;top:50%;left:50%;width:14px;height:14px;border:2px solid #e8a54b;border-radius:50%;transform:translate(-50%,-50%);animation:locationPulse 1.6s ease-out 0.55s infinite;"></div>'
+                    + '</div>';
+                var pulseIcon = L.divIcon({ className: '', html: pulseHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+                var marker = L.marker([lat, lng], { icon: pulseIcon }).addTo(globeLeafletMap);
+                marker.bindPopup('<b style="color:#e8a54b;font-size:1rem;">' + stationNumber + '</b><br><small>' + lat.toFixed(5) + ', ' + lng.toFixed(5) + '</small>');
+                setTimeout(function() {
+                    globeLeafletMap.flyTo([lat, lng], 14, { duration: 1.9, easeLinearity: 0.25 });
+                    setTimeout(function() { marker.openPopup(); }, 2400);
+                }, 250);
+            }, 80);
+        }
+
+        function hideGlobe() {
+            var gs = document.getElementById('globeSection');
+            gs.style.opacity = '0';
+            gs.style.transition = 'opacity 0.4s ease';
+            setTimeout(function() {
+                gs.style.display = 'none';
+                gs.style.opacity = '';
+                gs.style.transition = '';
+                if (globeLeafletMap) { globeLeafletMap.remove(); globeLeafletMap = null; }
+            }, 420);
+        }
+
+        async function searchStation() {
+            var v = convertArabicToEnglishNumbers(document.getElementById('searchInput').value.trim());
+            document.getElementById('searchInput').value = v;
+            if (!v) { showToast('ادخل الرقم', 'warning'); return; }
+            showGlobeMini();
+            if (!isStationsLoaded) { showLoading(); await loadStationsCache(); hideLoading(); }
+            var r = searchStationLocal(v), rc = document.getElementById('resultsContent'), rn = document.getElementById('resultsCount');
             document.getElementById('resultsSection').style.display = 'block';
-            showFeederMode = false; 
-            if (!r.found) { 
-                rc.innerHTML = '<div class="not-found-card"><h4>غير موجود</h4><div class="searched-number">' + v + '</div></div>'; 
-                rn.textContent = '0'; 
-                document.getElementById('mapSection').style.display = 'none'; 
-                currentSearchedStation = null; 
-            } else { 
-                currentSearchedStation = r.station; 
+            showFeederMode = false;
+            if (!r.found) {
+                document.getElementById('globeLabel').innerHTML = '<span style="color:var(--danger)">❌ لم يتم العثور على المحطة: ' + v + '</span>';
+                setTimeout(hideGlobe, 1800);
+                rc.innerHTML = '<div class="not-found-card"><h4>غير موجود</h4><div class="searched-number">' + v + '</div></div>';
+                rn.textContent = '0';
+                document.getElementById('mapSection').style.display = 'none';
+                currentSearchedStation = null;
+            } else {
+                currentSearchedStation = r.station;
                 var s = r.station;
+                if (s.lat && s.lng) {
+                    showGlobeExpanded(parseFloat(s.lat), parseFloat(s.lng), s.number);
+                } else {
+                    hideGlobe();
+                }
                 var url = s.googleMap || (s.lat && s.lng ? 'https://www.google.com/maps?q=' + s.lat + ',' + s.lng : '');
-                var tb = s.type === 'distribution' ? '<span class="type-badge type-distribution">توزيع</span>' : '<span class="type-badge type-substation">تحويل</span>'; 
+                var tb = s.type === 'distribution' ? '<span class="type-badge type-distribution">توزيع</span>' : '<span class="type-badge type-substation">تحويل</span>';
                 var editBtn = '<button class="action-btn btn-edit" style="padding:0.4rem 0.8rem;font-size:0.8rem;" onclick="openEditFromSearch()"><svg viewBox="0 0 24 24" style="width:1rem;height:1rem;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg><span>تعديل</span></button>';
-                var feederBtn = ''; 
+                var feederBtn = '';
                 if (s.type === 'distribution' && s.feeder) { 
                     feederBtn = '<div class="feeder-toggle"><button class="feeder-btn active" id="nearbyBtn" onclick="toggleMapMode(\'nearby\')"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>القريبة (1.5 كم)</button><button class="feeder-btn" id="feederBtn" onclick="toggleMapMode(\'feeder\')"><svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>محطات المغذي (' + s.feeder + ')</button></div>'; 
                 } 
