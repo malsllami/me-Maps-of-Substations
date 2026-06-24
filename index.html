@@ -268,7 +268,7 @@
     </style>
 </head>
 <body>
-    <div class="page login-page active" id="loginPage">
+    <div class="page login-page" id="loginPage">
         <div class="login-card">
             <div class="login-logo"><div class="icon">⚡</div><h1>نظام محطات SEC</h1><p>الشركة السعودية للكهرباء - جدة</p></div>
             <div class="tabs"><div class="tab active" onclick="switchTab('login')">تسجيل دخول</div><div class="tab" onclick="switchTab('register')">مشترك جديد</div></div>
@@ -803,7 +803,7 @@
             }
         }
         function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; localStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; showToast('تم الخروج'); }
-        function checkSession() { var s = localStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); } }
+        function checkSession() { try { var s = localStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); if (!currentUser || !currentUser.name) throw new Error('bad session'); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); } else { showPage('loginPage'); } } catch(e) { localStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); showPage('loginPage'); } }
 
         function showGlobeMini() {
             var gs = document.getElementById('globeSection');
