@@ -851,7 +851,6 @@
         }
 
         function offerBiometricSetup() {
-            if (!window.PublicKeyCredential) return;
             if (localStorage.getItem('biometric_credential_id')) return;
             if (localStorage.getItem('biometric_banner_dismissed')) return;
             setTimeout(function() {
@@ -861,7 +860,11 @@
         }
 
         async function setupBiometric() {
-            if (!window.PublicKeyCredential) { showToast('الجهاز لا يدعم البصمة', 'warning'); return; }
+            if (!window.PublicKeyCredential) { showToast('المتصفح لا يدعم البصمة، جرب Chrome أو Edge', 'warning'); return; }
+            try {
+                var hasAuth = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!hasAuth) { showToast('الجهاز لا يدعم البصمة — فعّل Windows Hello أو بصمة الجوال في إعدادات الجهاز أولاً', 'warning'); return; }
+            } catch(e) {}
             try {
                 var rpId = (location.hostname && location.hostname !== '') ? location.hostname : undefined;
                 var challenge = new Uint8Array(32);
