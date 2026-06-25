@@ -316,6 +316,7 @@
         @media(max-width:360px){.shift-today-bar{grid-template-columns:repeat(2,1fr)}}
         /* ===== GLOWING CIRCLE LOGIN ===== */
         .login-page{background:#06090f!important}
+        .login-page.active{display:flex!important;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
         .login-card{background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:0!important;width:auto!important;max-width:none!important;display:flex;flex-direction:column;align-items:center}
         .login-circle-outer{position:relative;--cr:145px;width:calc(var(--cr)*2 + 20px);height:calc(var(--cr)*2 + 20px);display:flex;align-items:center;justify-content:center}
         .ring-wrap{position:absolute;inset:0;border-radius:50%}
@@ -366,9 +367,12 @@
         .circle-overlay .login-inner{width:calc(var(--cr)*1.42)}
         .circle-overlay .login-inner .btn-success{background:linear-gradient(135deg,#00acc1,#00e5ff);color:#06090f;font-weight:700;border:none;border-radius:0.55rem;padding:0.7rem;font-family:'Tajawal',sans-serif;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 20px rgba(0,229,255,0.28);width:100%;margin-top:0.2rem}
         .circle-overlay .login-inner .btn-primary{background:linear-gradient(135deg,#00acc1,#00e5ff);color:#06090f;font-weight:700;border:none;border-radius:0.55rem;padding:0.7rem;font-family:'Tajawal',sans-serif;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 20px rgba(0,229,255,0.28);width:100%}
-        .circle-overlay-links{margin-top:1rem;display:flex;align-items:center;gap:0.5rem}
-        .circle-overlay-links a{color:rgba(0,229,255,0.6);font-size:0.85rem;text-decoration:none;transition:0.2s;font-family:'Tajawal',sans-serif}
-        .circle-overlay-links a:hover{color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,0.5)}
+        /* بيل التنقل أسفل الدائرة */
+        .login-nav-pill,.circle-overlay-links{display:inline-flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.58rem 1.6rem;margin-top:1.2rem;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.22);border-radius:2rem;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);flex-shrink:0}
+        .login-nav-pill span,.login-nav-pill a,.circle-overlay-links a{color:rgba(0,229,255,0.75);font-size:0.9rem;cursor:pointer;text-decoration:none;font-family:'Tajawal',sans-serif;font-weight:600;transition:0.2s;white-space:nowrap}
+        .login-nav-pill span:hover,.login-nav-pill a:hover,.circle-overlay-links a:hover{color:#00e5ff;text-shadow:0 0 10px rgba(0,229,255,0.55)}
+        .login-nav-pill .lil-sep{opacity:0.3;cursor:default;pointer-events:none}
+        @media(max-width:340px){.login-nav-pill,.circle-overlay-links{padding:0.45rem 1rem;font-size:0.78rem;gap:0.5rem}}
         .admin-code-wrap{position:relative;width:100%}
         .admin-code-wrap input{background:rgba(0,229,255,0.04);border:1.5px solid rgba(0,229,255,0.28);color:#fff;border-radius:0.5rem;padding:0.7rem 2.5rem 0.7rem 0.75rem;font-size:1.6rem;width:100%;text-align:center;letter-spacing:0.5em;font-family:monospace}
         .admin-code-wrap input:focus{border-color:#00e5ff;outline:none;box-shadow:0 0 10px rgba(0,229,255,0.22)}
@@ -479,15 +483,16 @@
                             <span class="fp-label">دخول بالبصمة</span>
                         </button>
                     </div>
-                    <div class="login-inner-links">
-                        <span onclick="showRegisterView()">مشترك جديد</span>
-                        <span class="lil-sep">|</span>
-                        <a href="#" onclick="showAdminLogin()">🔐 المدير</a>
-                    </div>
                 </div>
             </div>
         </div>
+        <div class="login-nav-pill">
+            <span onclick="showRegisterView()">مشترك جديد</span>
+            <span class="lil-sep">|</span>
+            <a href="#" onclick="showAdminLogin()">🔐 المدير</a>
+        </div>
     </div>
+
 
     <!-- اوفرلي تسجيل مشترك جديد -->
     <div class="circle-overlay" id="registerOverlay">
@@ -978,8 +983,7 @@
             } 
         }
         
-        function showPage(id) { 
-            console.log('Switching to page:', id);
+        function showPage(id) {
             var pages = document.querySelectorAll('.page');
             for (var i = 0; i < pages.length; i++) {
                 pages[i].classList.remove('active');
@@ -988,7 +992,7 @@
             var targetPage = document.getElementById(id);
             if (targetPage) {
                 targetPage.classList.add('active');
-                targetPage.style.display = 'block';
+                targetPage.style.display = targetPage.classList.contains('login-page') ? 'flex' : 'block';
             }
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
