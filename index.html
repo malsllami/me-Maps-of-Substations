@@ -125,7 +125,7 @@
         .map-section h3{font-size:1rem;color:var(--sec-orange);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
         .map-container{height:300px;border-radius:0.75rem;overflow:hidden}
         .leaflet-container{background:var(--bg-input)}
-        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;overflow-y:auto}
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;overflow-y:auto}
         .modal-overlay.active{display:flex}
         .modal{background:var(--bg-card);border-radius:1rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
         .modal-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-card);z-index:10}
@@ -314,41 +314,81 @@
           .sl-item{font-size:0.65rem}
         }
         @media(max-width:360px){.shift-today-bar{grid-template-columns:repeat(2,1fr)}}
+        /* ===== GLOWING CIRCLE LOGIN ===== */
+        .login-page{background:#06090f!important}
+        .login-card{background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:0!important;width:auto!important;max-width:none!important;display:flex;flex-direction:column;align-items:center}
+        .login-circle-outer{position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center}
+        .ring-wrap{position:absolute;inset:0;border-radius:50%}
+        .ring-wrap.spinning{animation:ringRotate 1.2s linear infinite}
+        @keyframes ringRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .ring-wrap span{position:absolute;top:50%;left:50%;width:3px;height:20px;background:linear-gradient(to bottom,#00e5ff,rgba(0,229,255,0.15));border-radius:3px;margin-left:-1.5px;margin-top:-150px;transform-origin:center 150px;transform:rotate(calc(var(--i)*7.2deg));opacity:0.6;box-shadow:0 0 6px #00e5ff,0 0 14px rgba(0,229,255,0.35)}
+        .login-inner{position:relative;z-index:10;width:228px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.7rem}
+        .login-circle-title{font-size:2rem;font-weight:700;color:#00e5ff;text-shadow:0 0 22px rgba(0,229,255,0.75);letter-spacing:0.05em;margin-bottom:0.1rem}
+        .login-inner .form-group{width:100%;margin-bottom:0;text-align:right}
+        .login-inner .form-group label{font-size:0.72rem;color:rgba(0,229,255,0.65);margin-bottom:0.3rem;display:block}
+        .login-inner .form-group input{background:rgba(0,229,255,0.04);border:1.5px solid rgba(0,229,255,0.28);color:#fff;border-radius:0.5rem;padding:0.58rem 0.75rem;font-size:0.88rem;width:100%;direction:ltr;text-align:center;font-family:'Tajawal',sans-serif}
+        .login-inner .form-group input:focus{border-color:#00e5ff;outline:none;box-shadow:0 0 10px rgba(0,229,255,0.22)}
+        .login-inner .form-group input.valid{border-color:#00e5ff;box-shadow:0 0 8px rgba(0,229,255,0.32)}
+        .login-inner .form-group input.error{border-color:#ff4081}
+        .login-inner .input-hint{font-size:0.68rem;color:rgba(0,229,255,0.5);margin-top:0.18rem;text-align:center}
+        .login-inner .input-hint.success{color:#00e5ff}
+        .login-inner .input-hint.error{color:#ff4081}
+        .login-inner .btn-primary{background:linear-gradient(135deg,#00acc1,#00e5ff);color:#06090f;font-weight:700;width:100%;border-radius:0.55rem;padding:0.68rem;box-shadow:0 4px 20px rgba(0,229,255,0.28);font-size:0.95rem;font-family:'Tajawal',sans-serif;border:none;cursor:pointer}
+        .login-inner .btn-primary:hover:not(:disabled){box-shadow:0 6px 28px rgba(0,229,255,0.48);transform:translateY(-2px)}
+        .login-inner .btn-primary:disabled{opacity:0.38;cursor:not-allowed;transform:none}
+        .remember-row{display:flex;align-items:center;gap:0.45rem;font-size:0.73rem;color:rgba(255,255,255,0.38);width:100%;justify-content:center}
+        .remember-row input[type=checkbox]{accent-color:#00e5ff;width:0.88rem;height:0.88rem;flex-shrink:0;cursor:pointer}
+        .remember-row label{cursor:pointer;margin:0}
+        .login-links{margin-top:1.1rem;display:flex;flex-direction:column;align-items:center;gap:0.6rem}
+        .login-links a,.login-links span{color:#00e5ff;font-size:0.9rem;text-decoration:none;cursor:pointer;opacity:0.72;transition:0.2s;font-family:'Tajawal',sans-serif}
+        .login-links a:hover,.login-links span:hover{opacity:1;text-shadow:0 0 10px rgba(0,229,255,0.55)}
+        .login-register-card{background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.18);border-radius:1rem;padding:1.25rem 1.5rem;width:300px;margin-top:0.8rem;display:none}
+        .login-register-card.active{display:block}
+        .login-register-card .form-group label{color:rgba(0,229,255,0.65);font-size:0.78rem}
+        .login-register-card .form-group input,.login-register-card .form-group select{background:rgba(0,229,255,0.04);border:1.5px solid rgba(0,229,255,0.22);color:#fff;border-radius:0.5rem;font-family:'Tajawal',sans-serif}
+        .login-register-card .form-group input:focus,.login-register-card .form-group select:focus{border-color:#00e5ff;outline:none;box-shadow:0 0 8px rgba(0,229,255,0.2)}
+        .login-register-card .form-group select option{background:#08101e}
+        .login-register-card .btn-success{background:linear-gradient(135deg,#00acc1,#00e5ff);color:#06090f;font-weight:700;font-family:'Tajawal',sans-serif;border:none}
+        .login-page .tabs{display:none!important}
+        .login-page .login-logo{display:none!important}
+        .login-page .admin-link{display:none!important}
     </style>
 </head>
 <body>
     <div class="page login-page" id="loginPage">
         <div class="login-card">
-            <div class="login-logo"><div class="icon">⚡</div><h1>نظام محطات SEC</h1><p>الشركة السعودية للكهرباء - جدة</p></div>
-            <div class="tabs"><div class="tab active" onclick="switchTab('login')">تسجيل دخول</div><div class="tab" onclick="switchTab('register')">مشترك جديد</div></div>
-            <div class="tab-content active" id="loginTab">
-                <form onsubmit="return handleLogin(event)">
-                    <div class="form-group"><label>رقم الجوال</label><input type="tel" id="loginPhone" placeholder="05xxxxxxxx" maxlength="10" oninput="validateLoginPhone()" required><div class="input-hint" id="loginPhoneHint">10 ارقام تبدا بـ 05</div></div>
-                    <button type="submit" class="btn btn-primary" id="loginBtn" disabled>دخول</button>
-                    <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.9rem;">
-                        <input type="checkbox" id="rememberMeCheck" checked style="width:1.1rem;height:1.1rem;accent-color:var(--sec-orange);cursor:pointer;flex-shrink:0;">
-                        <label for="rememberMeCheck" style="color:var(--text-secondary);font-size:0.85rem;cursor:pointer;margin:0;">تذكرني على هذا الجهاز</label>
+            <!-- الدائرة المضيئة -->
+            <div class="login-circle-outer">
+                <div class="ring-wrap" id="ringWrap"></div>
+                <div class="login-inner">
+                    <div class="login-circle-title">دخول</div>
+                    <div class="tab-content active" id="loginTab">
+                        <form onsubmit="return handleLogin(event)" style="display:flex;flex-direction:column;gap:0.6rem;width:100%;">
+                            <div class="form-group"><label>رقم الجوال</label><input type="tel" id="loginPhone" placeholder="05xxxxxxxx" maxlength="10" oninput="validateLoginPhone()" required><div class="input-hint" id="loginPhoneHint">10 ارقام تبدا بـ 05</div></div>
+                            <button type="submit" class="btn btn-primary" id="loginBtn" disabled>دخول</button>
+                            <div class="remember-row"><input type="checkbox" id="rememberMeCheck" checked><label for="rememberMeCheck">تذكرني</label></div>
+                        </form>
+                        <div id="biometricSection" style="display:none;margin-top:0.6rem;"><div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><div style="flex:1;height:1px;background:rgba(0,229,255,0.2);"></div><span style="color:rgba(0,229,255,0.45);font-size:0.75rem;white-space:nowrap;">أو</span><div style="flex:1;height:1px;background:rgba(0,229,255,0.2);"></div></div><button type="button" onclick="loginWithBiometric()" style="width:100%;padding:0.68rem;border:1.5px solid rgba(0,229,255,0.38);border-radius:0.5rem;background:rgba(0,229,255,0.05);color:#00e5ff;font-family:'Tajawal',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:0.3s;"><span style="font-size:1.2rem;">👆</span> دخول بالبصمة</button></div>
                     </div>
-                </form>
-                <div id="biometricSection" style="display:none;margin-top:0.75rem;">
-                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="color:var(--text-secondary);font-size:0.8rem;white-space:nowrap;">أو</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
-                    <button type="button" onclick="loginWithBiometric()" style="width:100%;padding:0.8rem;border:2px solid var(--sec-orange);border-radius:0.5rem;background:linear-gradient(135deg,rgba(232,165,75,0.1),rgba(232,165,75,0.05));color:var(--sec-orange);font-family:'Tajawal',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:0.3s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(232,165,75,0.2),rgba(232,165,75,0.1))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(232,165,75,0.1),rgba(232,165,75,0.05))'">
-                        <span style="font-size:1.3rem;">👆</span> دخول بالبصمة
-                    </button>
                 </div>
             </div>
-            <div class="tab-content" id="registerTab">
-                <form onsubmit="return handleRegister(event)">
-                    <div class="form-group"><label>الاسم *</label><input type="text" id="regName" placeholder="الاسم" oninput="validateRegPhone()" required></div>
-                    <div class="form-row">
-                        <div class="form-group"><label>رقم الجوال *</label><input type="tel" id="regPhone" placeholder="05xxxxxxxx" maxlength="10" oninput="validateRegPhone()" required><div class="input-hint" id="regPhoneHint">10 ارقام</div></div>
-                        <div class="form-group"><label>النوع</label><select id="regType"><option value="موظف">موظف</option><option value="مقاول">مقاول</option></select></div>
-                    </div>
-                    <div class="form-group"><label>البريد</label><input type="email" id="regEmail" placeholder="example@email.com"></div>
-                    <button type="submit" class="btn btn-success" id="regBtn" disabled>تسجيل</button>
-                </form>
+            <!-- روابط أسفل الدائرة -->
+            <div class="login-links">
+                <span onclick="showRegisterView()">مشترك جديد</span>
+                <a href="#" onclick="showAdminLogin()">🔐 دخول المدير</a>
             </div>
-            <div class="admin-link"><a href="#" onclick="showAdminLogin()">🔐 دخول المدير</a></div>
+            <!-- بطاقة التسجيل (تظهر عند الضغط على مشترك جديد) -->
+            <div class="login-register-card" id="registerCard">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.9rem;"><span style="color:#00e5ff;font-size:1.05rem;font-weight:700;">مشترك جديد</span><button type="button" onclick="showLoginView()" style="background:transparent;border:none;color:rgba(0,229,255,0.55);cursor:pointer;font-size:0.82rem;font-family:'Tajawal',sans-serif;padding:0.2rem 0.4rem;transition:0.2s;" onmouseover="this.style.color='#00e5ff'" onmouseout="this.style.color='rgba(0,229,255,0.55)'">← رجوع</button></div>
+                <div class="tab-content active" id="registerTab">
+                    <form onsubmit="return handleRegister(event)">
+                        <div class="form-group"><label>الاسم *</label><input type="text" id="regName" placeholder="الاسم" oninput="validateRegPhone()" required></div>
+                        <div class="form-row"><div class="form-group"><label>رقم الجوال *</label><input type="tel" id="regPhone" placeholder="05xxxxxxxx" maxlength="10" oninput="validateRegPhone()" required><div class="input-hint" id="regPhoneHint">10 ارقام</div></div><div class="form-group"><label>النوع</label><select id="regType"><option value="موظف">موظف</option><option value="مقاول">مقاول</option></select></div></div>
+                        <div class="form-group"><label>البريد</label><input type="email" id="regEmail" placeholder="example@email.com"></div>
+                        <button type="submit" class="btn btn-success" id="regBtn" disabled>تسجيل</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -823,18 +863,23 @@
         function validateLoginPhone() { var i = document.getElementById('loginPhone'), h = document.getElementById('loginPhoneHint'), b = document.getElementById('loginBtn'); i.value = convertArabicToEnglishNumbers(i.value).replace(/\D/g, ''); var n = normalizePhone(i.value); if (!i.value.length) { i.className = ''; h.textContent = '10 ارقام تبدا بـ 05'; h.className = 'input-hint'; b.disabled = true; } else if (isValidPhone(i.value)) { i.className = 'valid'; h.textContent = '✓'; h.className = 'input-hint success'; b.disabled = false; } else { i.className = 'error'; h.textContent = n.length < 10 ? (10-n.length) + ' ارقام' : 'يجب 05'; h.className = 'input-hint error'; b.disabled = true; } }
         function validateRegPhone() { var i = document.getElementById('regPhone'), h = document.getElementById('regPhoneHint'), b = document.getElementById('regBtn'), name = document.getElementById('regName').value.trim(); i.value = convertArabicToEnglishNumbers(i.value).replace(/\D/g, ''); var valid = isValidPhone(i.value) && name.length > 0; if (!i.value.length) { i.className = ''; h.textContent = '10 ارقام'; h.className = 'input-hint'; } else if (isValidPhone(i.value)) { i.className = 'valid'; h.textContent = '✓'; h.className = 'input-hint success'; } else { i.className = 'error'; h.className = 'input-hint error'; } b.disabled = !valid; }
 
-        function switchTab(t) { document.querySelectorAll('.tab').forEach(function(x) { x.classList.remove('active'); }); document.querySelectorAll('.tab-content').forEach(function(x) { x.classList.remove('active'); }); if (t === 'login') { document.querySelector('.tab:first-child').classList.add('active'); document.getElementById('loginTab').classList.add('active'); } else { document.querySelector('.tab:last-child').classList.add('active'); document.getElementById('registerTab').classList.add('active'); } }
+        function showRegisterView() { document.getElementById('registerCard').classList.add('active'); document.getElementById('loginTab').classList.remove('active'); document.getElementById('registerTab').classList.add('active'); var links = document.querySelector('.login-links'); if (links) links.style.display = 'none'; }
+        function showLoginView() { document.getElementById('registerCard').classList.remove('active'); document.getElementById('loginTab').classList.add('active'); document.getElementById('registerTab').classList.remove('active'); var links = document.querySelector('.login-links'); if (links) links.style.display = ''; }
+        function switchTab(t) { if (t === 'login') { showLoginView(); } else { showRegisterView(); } }
         
-        async function handleLogin(e) { 
-            e.preventDefault(); 
-            if (!isValidPhone(document.getElementById('loginPhone').value)) { showToast('رقم خاطئ', 'error'); return false; } 
-            var p = normalizePhone(document.getElementById('loginPhone').value); 
-            showLoading(); 
+        async function handleLogin(e) {
+            e.preventDefault();
+            if (!isValidPhone(document.getElementById('loginPhone').value)) { showToast('رقم خاطئ', 'error'); return false; }
+            var p = normalizePhone(document.getElementById('loginPhone').value);
+            var ring = document.getElementById('ringWrap');
+            var btn = document.getElementById('loginBtn');
+            if (ring) ring.classList.add('spinning');
+            if (btn) btn.disabled = true;
             try {
-                var r = await apiPost({ action: 'loginUser', phone: p }); 
-                hideLoading(); 
-                if (r.notFound) { showToast('غير مسجل', 'warning'); switchTab('register'); document.getElementById('regPhone').value = p; validateRegPhone(); return false; } 
-                if (r.error) { showToast(r.error, 'error'); return false; } 
+                var r = await apiPost({ action: 'loginUser', phone: p });
+                if (ring) ring.classList.remove('spinning');
+                if (r.notFound) { if (btn) btn.disabled = false; showToast('غير مسجل', 'warning'); switchTab('register'); document.getElementById('regPhone').value = p; validateRegPhone(); return false; }
+                if (r.error) { if (btn) btn.disabled = false; showToast(r.error, 'error'); return false; }
                 currentUser = r.user;
                 saveSession(currentUser);
                 updateUserUI();
@@ -843,7 +888,7 @@
                 loadStationsCache();
                 startOnlineTracking();
                 offerBiometricSetup();
-            } catch (err) { hideLoading(); showToast('فشل الاتصال', 'error'); }
+            } catch (err) { if (ring) ring.classList.remove('spinning'); if (btn) btn.disabled = false; showToast('فشل الاتصال', 'error'); }
             return false;
         }
 
@@ -852,11 +897,14 @@
             var name = document.getElementById('regName').value.trim();
             if (!name || !isValidPhone(document.getElementById('regPhone').value)) { showToast('تحقق من البيانات', 'error'); return false; }
             var p = normalizePhone(document.getElementById('regPhone').value);
-            showLoading();
+            var ring = document.getElementById('ringWrap');
+            var btn = document.getElementById('regBtn');
+            if (ring) ring.classList.add('spinning');
+            if (btn) btn.disabled = true;
             try {
                 var r = await apiPost({ action: 'registerUser', name: name, phone: p, email: document.getElementById('regEmail').value.trim(), userType: document.getElementById('regType').value });
-                hideLoading();
-                if (r.error && !r.alreadyExists) { showToast(r.error, 'error'); return false; }
+                if (ring) ring.classList.remove('spinning');
+                if (r.error && !r.alreadyExists) { if (btn) btn.disabled = false; showToast(r.error, 'error'); return false; }
                 currentUser = r.user;
                 saveSession(currentUser);
                 updateUserUI();
@@ -864,9 +912,9 @@
                 showToast(r.alreadyExists ? 'مرحبا بعودتك' : 'تم التسجيل');
                 loadStationsCache();
                 startOnlineTracking();
-                offerBiometricSetup(); 
-            } catch (err) { hideLoading(); showToast('فشل الاتصال', 'error'); }
-            return false; 
+                offerBiometricSetup();
+            } catch (err) { if (ring) ring.classList.remove('spinning'); if (btn) btn.disabled = false; showToast('فشل الاتصال', 'error'); }
+            return false;
         }
         
         function updateUserUI() { document.getElementById('userName').textContent = currentUser.name; document.getElementById('userAvatar').textContent = currentUser.name.charAt(0); document.getElementById('userType').textContent = currentUser.type || 'موظف'; }
@@ -1848,6 +1896,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            (function() { var w = document.getElementById('ringWrap'); if (!w) return; for (var i = 0; i < 50; i++) { var s = document.createElement('span'); s.style.setProperty('--i', i); w.appendChild(s); } })();
             checkSession();
             checkIOSInstall();
             loadContactPhone();
