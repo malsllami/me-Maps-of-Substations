@@ -419,6 +419,7 @@
         .circle-overlay .login-circle-title{margin-bottom:0.1rem}
         .circle-overlay .btn-success{padding:0.55rem;font-size:0.88rem}
         .circle-overlay .btn-primary{padding:0.55rem;font-size:0.88rem}
+        .circle-overlay .form-row{grid-template-columns:1fr;gap:0.25rem}
         /* ===== شيبس البحث ===== */
         .search-chips-wrap{background:var(--bg-card);border-radius:1rem;padding:1rem 1.25rem;margin-bottom:1rem}
         .chips-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0}
@@ -467,6 +468,23 @@
                         <button type="submit" class="btn btn-primary" id="loginBtn" disabled>دخول</button>
                         <div class="remember-row"><input type="checkbox" id="rememberMeCheck" checked><label for="rememberMeCheck">تذكرني</label></div>
                     </form>
+                    <div id="biometricSection" style="display:none;width:100%;text-align:center;">
+                        <div class="sep-or"><span>أو</span></div>
+                        <button type="button" class="biometric-btn" onclick="loginWithBiometric()">
+                            <div class="fp-wrap">
+                                <div class="fp-ring"></div><div class="fp-ring"></div><div class="fp-ring"></div>
+                                <svg class="fp-svg" viewBox="0 0 64 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path class="fp-p1" d="M32 36 C30 32 30 27 32 24 C34 27 34 32 32 36Z"/>
+                                    <path class="fp-p2" d="M24 39 C21 33 21 22 26 16 C28 13 30 12 32 12 C34 12 36 13 38 16 C43 22 43 33 40 39"/>
+                                    <path class="fp-p3" d="M16 43 C13 35 13 19 20 11 C24 5 28 3 32 3 C36 3 40 5 44 11 C51 19 51 35 48 43"/>
+                                    <path class="fp-p4" d="M9 50 C6 39 6 19 14 9 C19 2 25 0 32 0 C39 0 45 2 50 9 C58 19 58 39 55 50"/>
+                                    <path class="fp-p5" d="M4 60 C1 47 1 23 10 11 C16 3 23 0 32 0 C41 0 48 3 54 11 C63 23 63 47 60 61"/>
+                                    <path class="fp-p6" d="M1 72 C-1 57 0 30 10 16 C17 5 24 2 32 2 C40 2 47 5 54 16 C64 30 65 57 62 73"/>
+                                </svg>
+                            </div>
+                            <span class="fp-label">دخول بالبصمة</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -475,23 +493,6 @@
             <span class="lil-sep">|</span>
             <a href="#" onclick="showAdminLogin()">🔐 المدير</a>
         </div>
-        <div id="biometricSection" style="margin-top:0.55rem;text-align:center;display:none;">
-            <div class="sep-or" style="width:160px;margin:0 auto 0.2rem;"><span>أو</span></div>
-            <button type="button" class="biometric-btn" onclick="loginWithBiometric()">
-                <div class="fp-wrap">
-                    <div class="fp-ring"></div><div class="fp-ring"></div><div class="fp-ring"></div>
-                    <svg class="fp-svg" viewBox="0 0 64 75" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path class="fp-p1" d="M32 36 C30 32 30 27 32 24 C34 27 34 32 32 36Z"/>
-                        <path class="fp-p2" d="M24 39 C21 33 21 22 26 16 C28 13 30 12 32 12 C34 12 36 13 38 16 C43 22 43 33 40 39"/>
-                        <path class="fp-p3" d="M16 43 C13 35 13 19 20 11 C24 5 28 3 32 3 C36 3 40 5 44 11 C51 19 51 35 48 43"/>
-                        <path class="fp-p4" d="M9 50 C6 39 6 19 14 9 C19 2 25 0 32 0 C39 0 45 2 50 9 C58 19 58 39 55 50"/>
-                        <path class="fp-p5" d="M4 60 C1 47 1 23 10 11 C16 3 23 0 32 0 C41 0 48 3 54 11 C63 23 63 47 60 61"/>
-                        <path class="fp-p6" d="M1 72 C-1 57 0 30 10 16 C17 5 24 2 32 2 C40 2 47 5 54 16 C64 30 65 57 62 73"/>
-                    </svg>
-                </div>
-                <span class="fp-label">دخول بالبصمة</span>
-            </button>
-        </div>
     </div>
 
 
@@ -499,7 +500,7 @@
     <div class="circle-overlay" id="registerOverlay">
         <div class="login-circle-outer">
             <div class="ring-wrap" id="regRingWrap"></div>
-            <div class="login-inner" style="width:250px;">
+            <div class="login-inner">
                 <div class="login-circle-title" style="font-size:1.45rem;">مشترك جديد</div>
                 <form id="registerTab" onsubmit="return handleRegister(event)" style="display:flex;flex-direction:column;gap:0.45rem;width:100%;">
                     <div class="form-group"><label>الاسم *</label><input type="text" id="regName" placeholder="الاسم" oninput="validateRegPhone()" required></div>
@@ -526,6 +527,23 @@
                         <div class="admin-code-wrap"><input type="password" id="adminCode" placeholder="••••" onkeypress="if(event.key==='Enter')adminLogin()"><button type="button" onclick="togglePassword()">👁</button></div>
                     </div>
                     <button class="btn btn-primary" onclick="adminLogin()">دخول</button>
+                </div>
+                <div id="adminBiometricSection" style="display:none;width:100%;text-align:center;">
+                    <div class="sep-or"><span>أو</span></div>
+                    <button type="button" class="biometric-btn" onclick="loginWithBiometric()">
+                        <div class="fp-wrap">
+                            <div class="fp-ring"></div><div class="fp-ring"></div><div class="fp-ring"></div>
+                            <svg class="fp-svg" viewBox="0 0 64 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="fp-p1" d="M32 36 C30 32 30 27 32 24 C34 27 34 32 32 36Z"/>
+                                <path class="fp-p2" d="M24 39 C21 33 21 22 26 16 C28 13 30 12 32 12 C34 12 36 13 38 16 C43 22 43 33 40 39"/>
+                                <path class="fp-p3" d="M16 43 C13 35 13 19 20 11 C24 5 28 3 32 3 C36 3 40 5 44 11 C51 19 51 35 48 43"/>
+                                <path class="fp-p4" d="M9 50 C6 39 6 19 14 9 C19 2 25 0 32 0 C39 0 45 2 50 9 C58 19 58 39 55 50"/>
+                                <path class="fp-p5" d="M4 60 C1 47 1 23 10 11 C16 3 23 0 32 0 C41 0 48 3 54 11 C63 23 63 47 60 61"/>
+                                <path class="fp-p6" d="M1 72 C-1 57 0 30 10 16 C17 5 24 2 32 2 C40 2 47 5 54 16 C64 30 65 57 62 73"/>
+                            </svg>
+                        </div>
+                        <span class="fp-label">دخول بالبصمة</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1017,7 +1035,7 @@
         function showRegisterView() { var o = document.getElementById('registerOverlay'); if (!o) return; o.classList.add('active'); var w = document.getElementById('regRingWrap'); if (w && !w.dataset.g) { for (var i=0;i<50;i++){var s=document.createElement('span');s.style.setProperty('--i',i);w.appendChild(s);} w.dataset.g='1'; } }
         function showLoginView() { var o = document.getElementById('registerOverlay'); if (o) o.classList.remove('active'); }
         function switchTab(t) { if (t === 'login') { showLoginView(); } else { showRegisterView(); } }
-        function showAdminLogin() { var o = document.getElementById('adminCircleOverlay'); if (!o) return; o.classList.add('active'); document.getElementById('adminCode').value=''; var w = document.getElementById('adminRingWrap'); if (w && !w.dataset.g) { for (var i=0;i<50;i++){var s=document.createElement('span');s.style.setProperty('--i',i);w.appendChild(s);} w.dataset.g='1'; } }
+        function showAdminLogin() { var o = document.getElementById('adminCircleOverlay'); if (!o) return; o.classList.add('active'); document.getElementById('adminCode').value=''; var w = document.getElementById('adminRingWrap'); if (w && !w.dataset.g) { for (var i=0;i<50;i++){var s=document.createElement('span');s.style.setProperty('--i',i);w.appendChild(s);} w.dataset.g='1'; } checkBiometricAvailable(); }
         function hideAdminCircle() { var o = document.getElementById('adminCircleOverlay'); if (o) o.classList.remove('active'); }
         
         async function handleLogin(e) {
@@ -1133,8 +1151,11 @@
 
         function checkBiometricAvailable() {
             var hasCred = !!localStorage.getItem('biometric_credential_id');
+            var show = (window.PublicKeyCredential && hasCred) ? 'block' : 'none';
             var sec = document.getElementById('biometricSection');
-            if (sec) sec.style.display = (window.PublicKeyCredential && hasCred) ? 'block' : 'none';
+            if (sec) sec.style.display = show;
+            var adminSec = document.getElementById('adminBiometricSection');
+            if (adminSec) adminSec.style.display = show;
         }
 
         function dismissBiometricBanner() {
