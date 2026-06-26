@@ -1227,6 +1227,22 @@
         }
 
         // ---- base64url <-> ArrayBuffer helpers (browser side) ----
+        function explainWebAuthnError(e) {
+            console.error('WebAuthn error:', e.name, '-', e.message);
+            if (e.name === 'SecurityError') {
+                // سبب شائع: rpId في WebAuthn.gs لسا REPLACE_WITH_YOUR_DOMAIN ولا يطابق دومين الصفحة،
+                // أو الصفحة محمّلة عبر blob:/iframe بدل فتح مباشر، أو فعلاً بدون HTTPS.
+                showToast('خطأ أمني: ' + e.message, 'error');
+                return;
+            }
+            if (e.name === 'NotSupportedError') {
+                showToast('البصمة غير مدعومة على هذا الرابط/المتصفح: ' + e.message, 'warning');
+                return;
+            }
+            if (e.name === 'NotAllowedError') return; // المستخدم ألغى أو انتهى الوقت -- صامت بدون رسالة
+            showToast('فشل العملية: ' + (e.message || e.name), 'error');
+        }
+
         function b64urlFromBuffer(buf) {
             var bytes = new Uint8Array(buf);
             var str = '';
@@ -1282,11 +1298,7 @@
                 dismissBiometricBanner();
                 showToast('✅ تم تفعيل تسجيل الدخول بالبصمة');
             } catch(e) {
-                if (e.name === 'NotSupportedError' || e.name === 'SecurityError') {
-                    showToast('البصمة تحتاج HTTPS — الميزة غير متاحة على هذا الرابط', 'warning');
-                } else if (e.name !== 'NotAllowedError') {
-                    showToast('فشل تفعيل البصمة', 'error');
-                }
+                explainWebAuthnError(e);
             }
         }
 
@@ -1329,9 +1341,7 @@
                 checkAdminStatus();
                 showToast('مرحبا ' + currentUser.name + ' 👋');
             } catch(e) {
-                if (e.name === 'NotAllowedError') return;
-                if (e.name === 'SecurityError') { showToast('البصمة تحتاج HTTPS', 'warning'); return; }
-                showToast('فشل التحقق بالبصمة', 'error');
+                explainWebAuthnError(e);
             }
         }
 
@@ -1373,11 +1383,7 @@
                 dismissAdminBiometricBanner();
                 showToast('✅ تم تفعيل بصمة المدير');
             } catch(e) {
-                if (e.name === 'NotSupportedError' || e.name === 'SecurityError') {
-                    showToast('البصمة تحتاج HTTPS — الميزة غير متاحة على هذا الرابط', 'warning');
-                } else if (e.name !== 'NotAllowedError') {
-                    showToast('فشل تفعيل البصمة', 'error');
-                }
+                explainWebAuthnError(e);
             }
         }
 
@@ -1417,9 +1423,7 @@
                 loadAdminData();
                 showToast('مرحبا بك في لوحة المدير 👋');
             } catch(e) {
-                if (e.name === 'NotAllowedError') return;
-                if (e.name === 'SecurityError') { showToast('البصمة تحتاج HTTPS', 'warning'); return; }
-                showToast('فشل التحقق بالبصمة', 'error');
+                explainWebAuthnError(e);
             }
         }
 
