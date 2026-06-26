@@ -1796,6 +1796,7 @@
                 if (logs.logs) document.getElementById('adminLogsBody').innerHTML = logs.logs.slice(-30).reverse().map(function(l) { return '<tr><td style="color:' + (l.type.indexOf('اضافة') !== -1 ? 'var(--success)' : 'var(--warning)') + '">' + l.type + '</td><td>' + l.station + '</td><td>' + l.user + '</td><td>' + l.date + '</td></tr>'; }).join('');
             } catch (e) {
                 console.error('Error loading admin data:', e);
+                showToast('فشل تحميل بيانات لوحة المدير', 'error');
             }
         }
         
