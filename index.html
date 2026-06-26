@@ -1197,6 +1197,22 @@
             }, 800);
         }
 
+        // ---- base64url <-> ArrayBuffer helpers (browser side) ----
+        function b64urlFromBuffer(buf) {
+            var bytes = new Uint8Array(buf);
+            var str = '';
+            for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        function bufferFromB64url(b64url) {
+            var s = b64url.replace(/-/g, '+').replace(/_/g, '/');
+            while (s.length % 4 !== 0) s += '=';
+            var str = atob(s);
+            var bytes = new Uint8Array(str.length);
+            for (var i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
+            return bytes;
+        }
+
         async function setupBiometric() {
             if (!window.PublicKeyCredential) { showToast('المتصفح لا يدعم البصمة، جرب Chrome أو Edge', 'warning'); return; }
             try {
@@ -1204,22 +1220,35 @@
                 if (!hasAuth) { showToast('الجهاز لا يدعم البصمة — فعّل Windows Hello أو بصمة الجوال في إعدادات الجهاز أولاً', 'warning'); return; }
             } catch(e) {}
             try {
-                var rpId = (location.hostname && location.hostname !== '') ? location.hostname : undefined;
-                var challenge = new Uint8Array(32);
-                crypto.getRandomValues(challenge);
+                var chalResp = await apiPost({ action: 'generateRegisterChallenge', phone: currentUser.phone });
+                if (chalResp.error) { showToast(chalResp.error, 'error'); return; }
+
                 var createOptions = {
-                    challenge: challenge,
-                    rp: { name: 'SEC Stations' },
-                    user: { id: new TextEncoder().encode(currentUser.phone), name: currentUser.phone, displayName: currentUser.name },
-                    pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+                    challenge: bufferFromB64url(chalResp.challenge),
+                    rp: { name: chalResp.rpName, id: chalResp.rpId },
+                    user: { id: bufferFromB64url(chalResp.userIdB64), name: chalResp.userName, displayName: chalResp.userDisplayName },
+                    pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
                     authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', requireResidentKey: false },
                     timeout: 60000
                 };
-                if (rpId) createOptions.rp.id = rpId;
                 var cred = await navigator.credentials.create({ publicKey: createOptions });
-                var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
-                localStorage.setItem('biometric_credential_id', credId);
-                localStorage.setItem('biometric_user', JSON.stringify(currentUser));
+                var credIdB64url = b64urlFromBuffer(cred.rawId);
+
+                var regResp = await apiPost({
+                    action: 'registerCredential',
+                    phone: currentUser.phone,
+                    credentialId: credIdB64url,
+                    attestationObjectB64: b64urlFromBuffer(cred.response.attestationObject),
+                    clientDataJSONB64: b64urlFromBuffer(cred.response.clientDataJSON),
+                    deviceName: (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'جهاز غير معروف'
+                });
+
+                if (regResp.error) { showToast(regResp.error, 'error'); return; }
+
+                // Locally remembered only as a UX hint (which phone/credential to try on this
+                // device) -- NOT a trust mechanism. The server verifies the signature on every login.
+                localStorage.setItem('biometric_credential_id', credIdB64url);
+                localStorage.setItem('biometric_phone', currentUser.phone);
                 localStorage.setItem('biometric_banner_dismissed', '1');
                 dismissBiometricBanner();
                 showToast('✅ تم تفعيل تسجيل الدخول بالبصمة');
@@ -1234,21 +1263,36 @@
 
         async function loginWithBiometric() {
             var credId = localStorage.getItem('biometric_credential_id');
-            if (!credId) { showToast('لم يتم تفعيل البصمة بعد', 'warning'); return; }
+            var phone = localStorage.getItem('biometric_phone');
+            if (!credId || !phone) { showToast('لم يتم تفعيل البصمة بعد', 'warning'); return; }
             try {
-                var challenge = new Uint8Array(32);
-                crypto.getRandomValues(challenge);
-                var credBytes = Uint8Array.from(atob(credId), function(c) { return c.charCodeAt(0); });
-                await navigator.credentials.get({ publicKey: {
-                    challenge: challenge,
-                    allowCredentials: [{ id: credBytes, type: 'public-key', transports: ['internal'] }],
+                var chalResp = await apiPost({ action: 'generateLoginChallenge', phone: phone });
+                if (chalResp.error) { showToast(chalResp.error, 'error'); return; }
+
+                var assertion = await navigator.credentials.get({ publicKey: {
+                    challenge: bufferFromB64url(chalResp.challenge),
+                    rpId: chalResp.rpId,
+                    allowCredentials: [{ id: bufferFromB64url(credId), type: 'public-key', transports: ['internal'] }],
                     userVerification: 'required',
                     timeout: 60000
                 }});
-                var savedUser = JSON.parse(localStorage.getItem('biometric_user'));
-                if (!savedUser) { showToast('بيانات غير موجودة، سجّل دخول بالجوال مرة واحدة', 'error'); return; }
-                currentUser = savedUser;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                var verifyResp = await apiPost({
+                    action: 'verifyAssertion',
+                    phone: phone,
+                    credentialId: credId,
+                    authenticatorDataB64: b64urlFromBuffer(assertion.response.authenticatorData),
+                    clientDataJSONB64: b64urlFromBuffer(assertion.response.clientDataJSON),
+                    signatureB64: b64urlFromBuffer(assertion.response.signature)
+                });
+
+                if (verifyResp.error) {
+                    showToast(verifyResp.error, verifyResp.possibleClone ? 'error' : 'warning');
+                    return;
+                }
+
+                currentUser = verifyResp.user;
+                saveSession(currentUser);
                 updateUserUI();
                 showPage('dashboardPage');
                 loadStationsCache();
