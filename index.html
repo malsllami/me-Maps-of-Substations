@@ -533,7 +533,7 @@
                 </div>
                 <div id="adminBiometricSection" style="display:none;width:100%;text-align:center;">
                     <div class="sep-or"><span>أو</span></div>
-                    <button type="button" class="biometric-btn" onclick="loginWithBiometric()">
+                    <button type="button" class="biometric-btn" onclick="loginAdminWithBiometric()">
                         <div class="fp-wrap">
                             <div class="fp-ring"></div><div class="fp-ring"></div><div class="fp-ring"></div>
                             <svg class="fp-svg" viewBox="0 0 64 75" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -650,6 +650,14 @@
         <button onclick="setupBiometric()" style="padding:0.5rem 1rem;background:var(--sec-orange);border:none;border-radius:0.5rem;color:#fff;font-family:'Tajawal',sans-serif;font-weight:600;cursor:pointer;font-size:0.85rem;white-space:nowrap;">تفعيل الآن</button>
         <button onclick="dismissBiometricBanner()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.4rem;padding:0.2rem 0.5rem;line-height:1;">×</button>
     </div>
+
+    <div id="adminBiometricBanner" style="display:none;position:fixed;bottom:1rem;left:1rem;right:1rem;z-index:1600;background:linear-gradient(135deg,rgba(20,20,30,0.96),rgba(30,20,10,0.95));border:1px solid rgba(155,89,182,0.5);border-radius:0.75rem;padding:0.85rem 1rem;align-items:center;gap:0.75rem;flex-wrap:wrap;box-shadow:0 6px 30px rgba(0,0,0,0.6);backdrop-filter:blur(12px);">
+        <span style="font-size:1.5rem;">🔐</span>
+        <div style="flex:1;min-width:150px;"><div style="font-weight:600;font-size:0.9rem;">تفعيل بصمة المدير</div><div style="font-size:0.75rem;color:var(--text-secondary);">دخول للوحة المدير بالبصمة بدون كتابة الرمز كل مرة</div></div>
+        <button onclick="setupAdminBiometric()" style="padding:0.5rem 1rem;background:#9b59b6;border:none;border-radius:0.5rem;color:#fff;font-family:'Tajawal',sans-serif;font-weight:600;cursor:pointer;font-size:0.85rem;white-space:nowrap;">تفعيل الآن</button>
+        <button onclick="dismissAdminBiometricBanner()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.4rem;padding:0.2rem 0.5rem;line-height:1;">×</button>
+    </div>
+
 
     <!-- صفحة تقويم الورديات -->
     <div class="page dashboard-page" id="shiftPage">
@@ -797,6 +805,7 @@
         let globeLeafletMap = null;
         let visitsChartInstance = null, activityChartInstance = null;
         let isAdmin = false;
+        let lastVerifiedAdminCode = null; // في الذاكرة فقط لهذه الجلسة -- لا يُحفظ في أي تخزين دائم
         const CACHE_KEY = 'sec_stations_v8', CACHE_VERSION_KEY = 'sec_version_v8';
         let allStations = [], isStationsLoaded = false, currentVersion = null;
         let onlineUpdateTimer = null, contactPhone = '966500000000';
@@ -1122,13 +1131,14 @@
                 if (btn) btn.disabled = false;
                 if (r.code && c === r.code) {
                     isAdmin = true;
+                    lastVerifiedAdminCode = c; // في الذاكرة فقط لهذه الجلسة، لاستخدامه إذا فعّل البصمة الآن
                     localStorage.setItem('isAdmin', 'true');
                     document.getElementById('adminToggleBtn').style.display = 'flex';
                     hideAdminCircle();
                     showPage('adminPage');
                     loadAdminData();
                     showToast('مرحبا بك في لوحة المدير');
-                    offerBiometricSetup();
+                    offerAdminBiometricSetup();
                 } else { showToast('رمز خاطئ', 'error'); }
             } catch(e) { if (ring) ring.classList.remove('spinning'); if (btn) btn.disabled = false; showToast('فشل الاتصال', 'error'); }
         }
@@ -1155,7 +1165,7 @@
                 document.getElementById('adminToggleBtn').style.display = 'flex';
             }
         }
-        function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); if (!localStorage.getItem('biometric_credential_id')) { localStorage.removeItem('biometric_banner_dismissed'); } document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; checkBiometricAvailable(); showToast('تم الخروج'); }
+        function logout() { stopOnlineTracking(); currentUser = null; isAdmin = false; lastVerifiedAdminCode = null; localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); if (!localStorage.getItem('biometric_credential_id')) { localStorage.removeItem('biometric_banner_dismissed'); } document.getElementById('adminToggleBtn').style.display = 'none'; showPage('loginPage'); document.getElementById('loginPhone').value = ''; document.getElementById('loginBtn').disabled = true; checkBiometricAvailable(); showToast('تم الخروج'); }
         function checkSession() { try { var s = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser'); if (s) { currentUser = JSON.parse(s); if (!currentUser || !currentUser.name) throw new Error('bad session'); updateUserUI(); showPage('dashboardPage'); loadStationsCache(); startOnlineTracking(); checkAdminStatus(); offerBiometricSetup(); } else { showPage('loginPage'); checkBiometricAvailable(); } } catch(e) { localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); localStorage.removeItem('isAdmin'); showPage('loginPage'); checkBiometricAvailable(); } }
 
         // ================================================
@@ -1177,8 +1187,11 @@
             var show = (window.PublicKeyCredential && hasCred) ? 'block' : 'none';
             var sec = document.getElementById('biometricSection');
             if (sec) sec.style.display = show;
+
+            var hasAdminCred = !!localStorage.getItem('admin_biometric_credential_id');
+            var showAdmin = (window.PublicKeyCredential && hasAdminCred) ? 'block' : 'none';
             var adminSec = document.getElementById('adminBiometricSection');
-            if (adminSec) adminSec.style.display = show;
+            if (adminSec) adminSec.style.display = showAdmin;
         }
 
         function dismissBiometricBanner() {
@@ -1193,6 +1206,22 @@
             if (localStorage.getItem('biometric_banner_dismissed')) return;
             setTimeout(function() {
                 var b = document.getElementById('biometricBanner');
+                if (b) b.style.display = 'flex';
+            }, 800);
+        }
+
+        function dismissAdminBiometricBanner() {
+            var b = document.getElementById('adminBiometricBanner');
+            if (b) b.style.display = 'none';
+            localStorage.setItem('admin_biometric_banner_dismissed', '1');
+        }
+
+        function offerAdminBiometricSetup() {
+            if (!isAdmin || !lastVerifiedAdminCode) return;
+            if (localStorage.getItem('admin_biometric_credential_id')) return;
+            if (localStorage.getItem('admin_biometric_banner_dismissed')) return;
+            setTimeout(function() {
+                var b = document.getElementById('adminBiometricBanner');
                 if (b) b.style.display = 'flex';
             }, 800);
         }
@@ -1299,6 +1328,94 @@
                 startOnlineTracking();
                 checkAdminStatus();
                 showToast('مرحبا ' + currentUser.name + ' 👋');
+            } catch(e) {
+                if (e.name === 'NotAllowedError') return;
+                if (e.name === 'SecurityError') { showToast('البصمة تحتاج HTTPS', 'warning'); return; }
+                showToast('فشل التحقق بالبصمة', 'error');
+            }
+        }
+
+        async function setupAdminBiometric() {
+            if (!lastVerifiedAdminCode) { showToast('سجّل دخول المدير بالرمز أولاً', 'warning'); return; }
+            if (!window.PublicKeyCredential) { showToast('المتصفح لا يدعم البصمة، جرب Chrome أو Edge', 'warning'); return; }
+            try {
+                var hasAuth = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!hasAuth) { showToast('الجهاز لا يدعم البصمة — فعّل Windows Hello أو بصمة الجوال في إعدادات الجهاز أولاً', 'warning'); return; }
+            } catch(e) {}
+            try {
+                var chalResp = await apiPost({ action: 'generateAdminRegisterChallenge', adminCode: lastVerifiedAdminCode });
+                if (chalResp.error) { showToast(chalResp.error, 'error'); return; }
+
+                var createOptions = {
+                    challenge: bufferFromB64url(chalResp.challenge),
+                    rp: { name: chalResp.rpName, id: chalResp.rpId },
+                    user: { id: bufferFromB64url(chalResp.userIdB64), name: chalResp.userName, displayName: chalResp.userDisplayName },
+                    pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+                    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', requireResidentKey: false },
+                    timeout: 60000
+                };
+                var cred = await navigator.credentials.create({ publicKey: createOptions });
+                var credIdB64url = b64urlFromBuffer(cred.rawId);
+
+                var regResp = await apiPost({
+                    action: 'registerAdminCredential',
+                    adminCode: lastVerifiedAdminCode,
+                    credentialId: credIdB64url,
+                    attestationObjectB64: b64urlFromBuffer(cred.response.attestationObject),
+                    clientDataJSONB64: b64urlFromBuffer(cred.response.clientDataJSON),
+                    deviceName: (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'جهاز غير معروف'
+                });
+
+                if (regResp.error) { showToast(regResp.error, 'error'); return; }
+
+                localStorage.setItem('admin_biometric_credential_id', credIdB64url);
+                localStorage.setItem('admin_biometric_banner_dismissed', '1');
+                dismissAdminBiometricBanner();
+                showToast('✅ تم تفعيل بصمة المدير');
+            } catch(e) {
+                if (e.name === 'NotSupportedError' || e.name === 'SecurityError') {
+                    showToast('البصمة تحتاج HTTPS — الميزة غير متاحة على هذا الرابط', 'warning');
+                } else if (e.name !== 'NotAllowedError') {
+                    showToast('فشل تفعيل البصمة', 'error');
+                }
+            }
+        }
+
+        async function loginAdminWithBiometric() {
+            var credId = localStorage.getItem('admin_biometric_credential_id');
+            if (!credId) { showToast('لم يتم تفعيل بصمة المدير بعد', 'warning'); return; }
+            try {
+                var chalResp = await apiPost({ action: 'generateAdminLoginChallenge' });
+                if (chalResp.error) { showToast(chalResp.error, 'error'); return; }
+
+                var assertion = await navigator.credentials.get({ publicKey: {
+                    challenge: bufferFromB64url(chalResp.challenge),
+                    rpId: chalResp.rpId,
+                    allowCredentials: [{ id: bufferFromB64url(credId), type: 'public-key', transports: ['internal'] }],
+                    userVerification: 'required',
+                    timeout: 60000
+                }});
+
+                var verifyResp = await apiPost({
+                    action: 'verifyAdminAssertion',
+                    credentialId: credId,
+                    authenticatorDataB64: b64urlFromBuffer(assertion.response.authenticatorData),
+                    clientDataJSONB64: b64urlFromBuffer(assertion.response.clientDataJSON),
+                    signatureB64: b64urlFromBuffer(assertion.response.signature)
+                });
+
+                if (verifyResp.error) {
+                    showToast(verifyResp.error, verifyResp.possibleClone ? 'error' : 'warning');
+                    return;
+                }
+
+                isAdmin = true;
+                localStorage.setItem('isAdmin', 'true');
+                document.getElementById('adminToggleBtn').style.display = 'flex';
+                hideAdminCircle();
+                showPage('adminPage');
+                loadAdminData();
+                showToast('مرحبا بك في لوحة المدير 👋');
             } catch(e) {
                 if (e.name === 'NotAllowedError') return;
                 if (e.name === 'SecurityError') { showToast('البصمة تحتاج HTTPS', 'warning'); return; }
